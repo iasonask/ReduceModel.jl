@@ -1,3 +1,10 @@
+# constants definition for referencing PowerModels data
+const VID = 1
+const VM = 2
+const VA = 3
+const PD = 4
+const QD = 5
+
 
 
 struct PMAreas
