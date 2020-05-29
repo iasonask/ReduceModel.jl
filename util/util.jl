@@ -5,7 +5,7 @@ using SparseArrays
 # from: https://kersulis.github.io/2015/11/05/admittance-matrix/
 
 """
-    createY(f,t,x [,r,b]) -> Y
+    createYbus(f,t,x [,r,b]) -> Y
 Create an admittance matrix for AC power flow.
 All inputs are real. The output matrix is real if no line
 resistances are provided (DC case), and complex otherwise.
@@ -14,7 +14,7 @@ resistances are provided (DC case), and complex otherwise.
 * `r`: per-unit resistance ri for all lines
 * `b`: per-unit susceptance bi for all lines
 """
-function createY(
+function createYbus(
     f::Vector{Int64},
     t::Vector{Int64},
     x::Vector{Float64},
