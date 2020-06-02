@@ -33,3 +33,11 @@ function createYbus(
         return Y
     end
 end
+
+
+function ismember(a, b)
+    Lia = in.(a, [b])
+    Lib = indexin(a, b)
+    Lib = [i == nothing ? 0 : i for i in Lib]
+    return Lia, Lib
+end
