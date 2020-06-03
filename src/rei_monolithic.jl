@@ -2,8 +2,7 @@
 
 using Revise
 using PowerModels
-using Ipopt
-using Gurobi
+using Ipopt, Gurobi
 using SparseArrays, LinearAlgebra
 
 include(joinpath(dirname(@__FILE__), "..", "util/types.jl"))
@@ -150,16 +149,16 @@ areaInfo = PMAreas(:cluster, 2, areas)
 # We will also need to keep information about interarea lines.
 nl = no_branches
 lineInfos = zeros(nl,10)
-
+let
 # The size of the new system that we update during reducing
-nNew = 0;
+nNew = 0
 
 # The total number of generators
-nGenNew = 0;
+nGenNew = 0
 
-for i in 1:areas.no_of_areas
+for i in 1:areaInfo.no_of_areas
     # Extract the names of the buses in area i
-    indAreaI = sort(areas.clusters[i])
+    indAreaI = sort(areaInfo.clusters[i])
 
     # Identify the frontier buses
     linesFr = in.(branch[:, F_BUS], [indAreaI])
@@ -167,9 +166,9 @@ for i in 1:areas.no_of_areas
     bordLines = xor.(linesFr,linesTo) # logical indexing of the border lines
     bordLineFr = bordLines .& linesFr # indices of the border lines from area i
     bordLineTo = bordLines .& linesTo # indices of the border lines to area i
-    indBusesFr = unique(branch[bordLineFr, F_BUS]) # indices of the border buses (direction from)
-    indBusesTo = unique(branch[bordLineTo, T_BUS]) # indices of the border buses (direction to)
-    indBusBord = union(indBusesFr, indBusesTo)
+    indBusesFr = sort(unique(branch[bordLineFr, F_BUS])) # indices of the border buses (direction from)
+    indBusesTo = sort(unique(branch[bordLineTo, T_BUS])) # indices of the border buses (direction to)
+    indBusBord = sort(union(indBusesFr, indBusesTo))
 
     # # Making sure that indBusBord is a column of indices :TODO check if necessary
     # if size(indBusBord,1) == 1
@@ -178,6 +177,7 @@ for i in 1:areas.no_of_areas
 
     # Essential buses: border buses and the two new REI buses
     (_, bordInArea) = ismember(indBusBord, indAreaI)
+    sort!(bordInArea)
 
     # log_ind = in.(a, [b])
     # inds = [1:length(log_ind)...][log_ind]
@@ -232,7 +232,7 @@ for i in 1:areas.no_of_areas
     # check whether one of the aggregated generators was the slack
     # not done!!! :TODO what does he mean here?
     isRefAgg = in.(indRefNZ, [areaIPVbuses])
-    if isRefAgg
+    if ~isempty(isRefAgg)
         warn("One of the aggregated generators was the slack bus!")
     end
 
@@ -465,7 +465,7 @@ for i in 1:areas.no_of_areas
 
     # storing the indices of the PV buses (for the new REI pv buses and the
     # non aggregated PV buses, i.e. those lying on the border).
-    if existPV
+    if existPV == 1
         indREIpv = size(YadmAreaRed, 1) - existPQ
     else
         indREIpv = []
@@ -474,5 +474,7 @@ for i in 1:areas.no_of_areas
     areaInfoI["areaIPV"] = sort([areaIBordRef_int; areaIBordPV_int; indREIpv])
 
     # Storing the area data
-    areaInfo.data[i] = areaInfoI;
+    areaInfo.data[i] = areaInfoI
+end
+
 end
