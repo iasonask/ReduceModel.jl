@@ -41,3 +41,7 @@ function ismember(a, b)
     Lib = [i == nothing ? 0 : i for i in Lib]
     return Lia, Lib
 end
+
+function readBrDict(br_i)
+    [br_i["f_bus"] br_i["t_bus"] br_i["br_r"] br_i["br_x"] (br_i["b_fr"] + br_i["b_to"]) br_i["rate_a"] br_i["rate_b"] br_i["rate_c"] br_i["transformer"] br_i["shift"] br_i["br_status"] br_i["angmin"] br_i["angmax"]]
+end
