@@ -267,17 +267,17 @@ let
             newTypes = [maximum(bus[areaIPVbuses, BUS_TYPE]); 1] # types of the new REI buses
 
             if selectPV
-                newPD = [0; -sum(real(powerRefCase[areaIPQbuses]))] * baseMVA
+                newPD = [0; -sum(real(powerRefCase[areaIPQbuses]))] # for matpower -> * baseMVA
                 # the minus sign is because we want the value of the consumption
-                newQD = [0; -sum(imag(powerRefCase[areaIPQbuses]))] * baseMVA
-                newPG = sum(real(powerRefCase[areaIPVbuses])) * baseMVA
-                newQG = sum(imag(powerRefCase[areaIPVbuses])) * baseMVA
+                newQD = [0; -sum(imag(powerRefCase[areaIPQbuses]))] # for matpower -> * baseMVA
+                newPG = sum(real(powerRefCase[areaIPVbuses])) # for matpower -> * baseMVA
+                newQG = sum(imag(powerRefCase[areaIPVbuses])) # for matpower -> * baseMVA
             else
-                newPD = [0; -sum(real(powerRefCaseL[areaIPQbuses]))] * baseMVA
+                newPD = [0; -sum(real(powerRefCaseL[areaIPQbuses]))] # for matpower -> * baseMVA
                 # the minus sign is because we want the value of the consumption
-                newQD = [0; -sum(imag(powerRefCaseL[areaIPQbuses]))] * baseMVA
-                newPG = sum(real(powerRefCaseG[areaIPVbuses])) * baseMVA
-                newQG = sum(imag(powerRefCaseG[areaIPVbuses])) * baseMVA
+                newQD = [0; -sum(imag(powerRefCaseL[areaIPQbuses]))] # for matpower -> * baseMVA
+                newPG = sum(real(powerRefCaseG[areaIPVbuses])) # for matpower -> * baseMVA
+                newQG = sum(imag(powerRefCaseG[areaIPVbuses])) # for matpower -> * baseMVA
             end
 
             areaInfoI["shiftGen"] = -2 # indicating that the new REI gen bus is the one before the last
@@ -287,11 +287,11 @@ let
             indE = [bordInArea; sizeAreaI+2]
             newTypes = maximum(bus[areaIPVbuses, BUS_TYPE])
             if selectPV
-                newPG = sum(real(powerRefCase[areaIPVbuses])) * baseMVA
-                newQG = sum(imag(powerRefCase[areaIPVbuses])) * baseMVA
-            else
-                newPG = sum(real(powerRefCaseG[areaIPVbuses])) * baseMVA
-                newQG = sum(imag(powerRefCaseG[areaIPVbuses])) * baseMVA
+                newPG = sum(real(powerRefCase[areaIPVbuses])) # for matpower -> * baseMVA
+                newQG = sum(imag(powerRefCase[areaIPVbuses])) # for matpower -> * baseMVA
+
+                newPG = sum(real(powerRefCaseG[areaIPVbuses])) # for matpower -> * baseMVA
+                newQG = sum(imag(powerRefCaseG[areaIPVbuses])) # for matpower -> * baseMVA
             end
             areaInfoI["shiftGen"] = -1 # indicating that the new REI gen bus is the one before the last
             areaInfoI["shiftLoad"] = 0 # indicating that the new REI load bus does not exist
@@ -301,11 +301,11 @@ let
             indE = [bordInArea; sizeAreaI+2]
             newTypes = 1
             if selectPV
-                newPD = -sum(real(powerRefCase[areaIPQbuses])) * baseMVA
-                newQD = -sum(imag(powerRefCase[areaIPQbuses])) * baseMVA
+                newPD = -sum(real(powerRefCase[areaIPQbuses])) # for matpower -> * baseMVA
+                newQD = -sum(imag(powerRefCase[areaIPQbuses])) # for matpower -> * baseMVA
             else
-                newPD = -sum(real(powerRefCaseL[areaIPQbuses])) * baseMVA
-                newQD = -sum(imag(powerRefCaseL[areaIPQbuses])) * baseMVA
+                newPD = -sum(real(powerRefCaseL[areaIPQbuses])) # for matpower -> * baseMVA
+                newQD = -sum(imag(powerRefCaseL[areaIPQbuses])) # for matpower -> * baseMVA
             end
             areaInfoI["shiftGen"] = 0
             areaInfoI["shiftLoad"] = -1
@@ -389,8 +389,8 @@ let
         # column 4: cell array containing the lists of the generators connected
         # to the new REI bus.
         busTypes = [bus[indBusBord, BUS_TYPE]; newTypes]
-        busPD = [bus[indBusBord, PD] .* baseMVA; newPD]
-        busQD = [bus[indBusBord, QD] .* baseMVA; newQD]
+        busPD = [bus[indBusBord, PD]; newPD]
+        busQD = [bus[indBusBord, QD]; newQD]
         (busGen, _) = ismember(gen[:, GEN_BUS], areaIPVbuses)
 
         (bT_2, bT_3) = (busTypes .== 2, busTypes .== 3)
@@ -543,13 +543,13 @@ let
         # Filling in the infos about the buses
         busNew[indBegin:indEnd, BUS_AREA] .= a
         busNew[indBegin:indEnd, BUS_TYPE] .= ai["busTypes"]
-        busNew[indBegin:indEnd, PD] .= ai["busPD"]
+        busNew[indBegin:indEnd, PD] = ai["busPD"]
         busNew[indBegin:indEnd, QD] = ai["busQD"]
 
         # indices of the PV bus to set voltages
         indPV_int = ai["areaIPV"][] + indBegin - 1
         busNew[indPV_int, VM] = abs(ai["Vtot"][])
-        busNew[indPV_int, VA] = angle(ai["Vtot"][]) / π * 180 # convert to degs for benchmarking
+        busNew[indPV_int, VA] = angle(ai["Vtot"][]) # in rad -> / π * 180 for degs
 
         # Copying the BS and GS values of the border buses from the original
         # buses
@@ -559,6 +559,7 @@ let
         shunts = pm.data["shunt"]
         if ~isempty(shunts)
             # a temporary mapping of the shunts to buses
+            # should be implement more efficient
             bus_shunts = zeros(no_buses, 2)
             for sh in shunts
                 id = parse(Int64, sh.second["shunt_bus"]) # :TODO check if is p.u. or not
@@ -708,8 +709,8 @@ let
     end
 
     # Filling in the shunt values
-    busNew[:, GS] = real(sum(YadmNew, dims=1)) * baseMVA #Shunt susceptance
-    busNew[:, BS] = imag(sum(YadmNew, dims=1)) * baseMVA # shunt values must NOT be in pu
+    busNew[:, GS] = real(sum(YadmNew, dims=1)) # Shunt susceptance -> * baseMVA for matpower
+    busNew[:, BS] = imag(sum(YadmNew, dims=1)) # :OLD "shunt values must NOT be in pu"
 
     # Taking care of the branches: for each bus i, we have n-i possible
     # branches. Some of them will be offline, status=0, meaning that there is
