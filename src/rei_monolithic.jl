@@ -89,11 +89,12 @@ solution = results["solution"]
 (bus_data, gen_data, branch_data, load_data) = (pm.data["bus"], pm.data["gen"], pm.data["branch"], pm.data["load"])
 
 # pass the results from the dictionary to arrays for easier calculations
-bus = zeros(Float64, (no_buses, 6))
+bus = zeros(Float64, (no_buses, 9))
 # sorted buses in 1:no_buses
 for bs in bus_sol
     id = parse(Int64, bs.first)
-    bus[id, BUS_ID:VA] = [id, bus_data[bs.first]["bus_type"], bs.second["vm"], bs.second["va"]]
+    bus[id, BUS_ID:BUS_TYPE] = [id, bus_data[bs.first]["bus_type"]]
+    bus[id, VM:VA] = [bs.second["vm"], bs.second["va"]]
 end
 
 # create branch table for simplifying operations
@@ -517,7 +518,7 @@ let
 
     # Some common values for the buses
     busNew[:, VM] .= 1
-    busNew[:, VA] .= 1
+    busNew[:, VA] .= 0
     busNew[:, VMAX] .= 1.05
     busNew[:, VMIN] .= 0.95
     busNew[:, BASE_KV] .= Vbase # :TODO check on that
@@ -548,7 +549,7 @@ let
         # indices of the PV bus to set voltages
         indPV_int = ai["areaIPV"][] + indBegin - 1
         busNew[indPV_int, VM] = abs(ai["Vtot"][])
-        busNew[indPV_int, VA] = angle(ai["Vtot"][]) # :TODO check degs or rads -> 180/pi *
+        busNew[indPV_int, VA] = angle(ai["Vtot"][]) / π * 180 # convert to degs for benchmarking
 
         # Copying the BS and GS values of the border buses from the original
         # buses
@@ -627,8 +628,8 @@ let
                 indGenTo = genNew[indGen, GEN_BUS]
                 # Updating their production by taking away the local load
                 if selectPV
-                    genNew[indGen, PG] = real(powerRefCase[Int64.(indGenTo)]) * baseMVA
-                    genNew[indGen, QG] = imag(powerRefCase[Int64.(indGenTo)]) * baseMVA
+                    genNew[indGen, PG] = real(powerRefCase[Int64.(indGenTo)])
+                    genNew[indGen, QG] = imag(powerRefCase[Int64.(indGenTo)])
                 end
                 # Connecting them to the righ buses in the reduced model
                 genNew[indGen, GEN_BUS] .= indEnd + ai["shiftGen"] + 1
@@ -781,7 +782,6 @@ let
     mpcNew["bus"] = busNew
     mpcNew["branch"] = branchNew
     mpcNew["gen"] = genNew
-    mpcNew["gencost"] = [] # :TODO must implement that
     loadmap_name = string("$(caseName)_reduced.m")
     areaInfo.data[0]["pm_reduced"] = mpcNew
 end

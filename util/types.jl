@@ -2,13 +2,13 @@
 # buses
 const BUS_ID = 1
 const BUS_TYPE = 2
-const VM = 3
-const VA = 4
-const PD = 5
-const QD = 6
+const PD = 3
+const QD = 4
+const GS = 5
+const BS = 6
 const BUS_AREA = 7
-const GS = 8
-const BS = 9
+const VM = 8
+const VA = 9
 const BASE_KV = 10 # check numbering
 const ZONE = 11 # check numbering
 const VMAX = 12
