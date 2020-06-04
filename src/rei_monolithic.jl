@@ -839,7 +839,7 @@ let
         end
     end
 
-    # PowerModels.correct_network_data!(case)
+    PowerModels.correct_network_data!(case)
     areaInfo.data[0]["pm_reduced"] = case
 end
 
@@ -852,3 +852,14 @@ if save
     s = sprint(print, pmodel_string)
     write(case["name"]*".m", s)
 end
+
+## test results
+# reduced = parse_file("/Users/iasonas/Box Sync/KTH/SPINE/Aggregation/Matlab/edited/case39_red_20200602.m")
+reduced = parse_file("case39_reduced.m")
+
+pm_red = instantiate_model(reduced, PFModel, build_opf)
+
+results_red = optimize_model!(pm_red, optimizer=Ipopt.Optimizer)
+
+print_summary(results_red)
+print_summary(results_red["solution"])

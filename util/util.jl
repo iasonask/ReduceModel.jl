@@ -72,7 +72,7 @@ function genArrayToDict(id::Int64, gen::Array{Float64, 1})
          "qc2max" => 0.0,
          "ramp_agc" => 0.0,
          "qg" => gen[QG],
-         "gen_bus" => gen[GEN_BUS],
+         "gen_bus" => Int64(gen[GEN_BUS]),
          "pmax" => gen[PMAX],
          "ramp_10" => 0.0,
          "vg" => gen[VG],
@@ -82,7 +82,7 @@ function genArrayToDict(id::Int64, gen::Array{Float64, 1})
          "index" => id,
          "cost" => [100.0, 30.0, 0.2],
          "qmax" => gen[QMAX],
-         "gen_status" => gen[GEN_STATUS],
+         "gen_status" => Int64(gen[GEN_STATUS]),
          "qmin" => gen[QMIN],
          "qc1min" => 0.0,
          "qc2min" => 0.0,
@@ -99,14 +99,14 @@ function genArrayToDict(id::Int64, gen::Array{Float64, 1}, gen_cost::Dict{String
     new_gen = deepcopy(gen_cost)
     new_gen["pg"] = gen[PG]
     new_gen["qg"] = gen[QG]
-    new_gen["gen_bus"] = gen[GEN_BUS]
+    new_gen["gen_bus"] = Int64(gen[GEN_BUS])
     new_gen["pmax"] = gen[PMAX]
     new_gen["vg"] = gen[VG]
     new_gen["mbase"] = gen[MBASE]
     new_gen["source_id"] = Any["gen", id]
     new_gen["index"] = id
     new_gen["qmax"] = gen[QMAX]
-    new_gen["gen_status"] = gen[GEN_STATUS]
+    new_gen["gen_status"] = Int64(gen[GEN_STATUS])
     new_gen["qmin"] = gen[QMIN]
     new_gen["pmin"] = gen[PMIN]
     return new_gen
@@ -123,9 +123,9 @@ function branchArrayToDict(id::Int64, branch::Array{Float64, 1})
          "g_fr" => 0.0, # :TODO check those values
          "source_id" => Any["branch", id],
          "b_fr" => branch[BR_B]/2,
-         "f_bus" => branch[F_BUS],
-         "br_status" => branch[BR_STATUS],
-         "t_bus" => branch[T_BUS],
+         "f_bus" => Int64(branch[F_BUS]),
+         "br_status" => Int64(branch[BR_STATUS]),
+         "t_bus" => Int64(branch[T_BUS]),
          "b_to" => branch[BR_B]/2,
          "index" => id,
          "angmin" => branch[ANGMIN],
@@ -149,8 +149,8 @@ function loadToDict(id::Int64, bus_id::Int64, bus::Array{Float64, 1})
     Dict("source_id" => Any["bus", bus_id],
          "load_bus"  => bus_id,
          "status"    => 1,
-         "qd"        => bus[PD],
-         "pd"        => bus[QD],
+         "qd"        => bus[QD],
+         "pd"        => bus[PD],
          "index"     => id,
          )
 end
