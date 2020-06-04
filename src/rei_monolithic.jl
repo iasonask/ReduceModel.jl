@@ -777,21 +777,78 @@ let
         borderLinesInfo[indSwap, [1, 2, 3, 4, 5, 6]] = borderLinesInfo[indSwap, [2, 1, 4, 3, 6, 5]]
     end
 
-    ## Save the reduced case :TODO
-    mpcNew = Dict()
-    mpcNew["baseMVA"] = baseMVA
-    mpcNew["bus"] = busNew
-    mpcNew["branch"] = branchNew
-    mpcNew["gen"] = genNew
-    loadmap_name = string("$(caseName)_reduced.m")
-    areaInfo.data[0]["pm_reduced"] = mpcNew
+    ## create a PowerModels dict to store the reduced network
+    caseName = string("$(pm.data["name"])_reduced")
+    # prepare a powermodels network dict and populate it with the calculated values
+    case = Dict{String, Any}()
+    case["bus"] = Dict{String,Any}()
+    for id in 1:size(busNew, 1)
+        case["bus"]["$(id)"] = busArrayToDict(busNew[id, :])
+    end
+
+    case["source_type"] = "matpower"
+    case["name"] = caseName
+    case["dcline"] = Dict{String, Any}() # will be left empty
+    case["source_version"] = "2"
+
+    case["gen"] = Dict{String, Any}()
+    if genGroup
+        @warn "Aggregating the generators, no cost parameters are introduced!"
+        for id in 1:size(genNew, 1)
+            case["gen"]["$(id)"] = genArrayToDict(id, genNew[id, :])
+        end
+    else
+        for id in 1:size(genNew, 1)
+            case["gen"]["$(id)"] = genArrayToDict(id, genNew[id, :], pm.data["gen"]["$(id)"])
+        end
+    end
+
+    case["branch"] = Dict{String, Any}()
+    for id in 1:size(branchNew, 1)
+        case["branch"]["$(id)"] = branchArrayToDict(id, branchNew[id, :])
+    end
+
+    if ~isempty(pm.data["storage"])
+        @warn "\"storage\" dict has storage units which are not considered here."
+    end
+    case["storage"] = Dict{String, Any}() # will be left empty
+
+    if ~isempty(pm.data["switch"])
+        @warn "\"switch\" dict has storage units which are not considered here."
+    end
+    case["switch"] = Dict{String, Any}() # will be left empty
+
+    case["baseMVA"] = baseMVA
+    case["per_unit"] = true
+
+    case["shunt"] = Dict{String, Any}()
+    sh_id = 1
+    for (bus_id, (gs, bs)) in enumerate(zip(busNew[:, GS], busNew[:, BS]))
+        if (abs(gs) + abs(bs) > 0)
+            case["shunt"]["$(sh_id)"] = shuntsToDict(sh_id, bus_id, busNew[bus_id, :])
+            sh_id += 1
+        end
+    end
+
+    case["load"] = Dict{String, Any}()
+    ld_id = 1
+    for (bus_id, (pd, qd)) in enumerate(zip(busNew[:, PD], busNew[:, QD]))
+        if (abs(pd) + abs(qd) > 0)
+            case["load"]["$(ld_id)"] = loadToDict(ld_id, bus_id, busNew[bus_id, :])
+            ld_id += 1
+        end
+    end
+
+    # PowerModels.correct_network_data!(case)
+    areaInfo.data[0]["pm_reduced"] = case
 end
 
-save = false
+save = true
 
 if save
-    pmodel = export_matpower(mpcNew)
+    case = areaInfo.data[0]["pm_reduced"]
+    pmodel_string = export_matpower(case)
     # save model in file
-    s = sprint(print, pmodel)
-    write(loadmap_name, s)
+    s = sprint(print, pmodel_string)
+    write(case["name"]*".m", s)
 end
