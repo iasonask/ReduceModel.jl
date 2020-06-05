@@ -29,14 +29,17 @@ selectPV = false
 # network_data = PowerModels.parse_file("../data/Matpower/case118.m")
 # network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case118_mod.m")
 # file = "/Users/iasonas/Documents/MATLAB/matpower7.0/data/case39.m"
-file = "data/Matpower/case118.m"
+# file = "data/Matpower/case118.m"
+file = "data/Matpower/case300.m"
 network_data = PowerModels.parse_file(file)
 caseName = split(file, "/")[end]
 # Set power flow model
 PFModel = ACPPowerModel
 
 # areas
-areas = partition(network_data["bus"], network_data["branch"])
+ext2int = Dict(bus["index"] => i for (i, (k, bus)) in enumerate(sort(network_data["bus"], by=x->parse(Int, x))))
+int2ext = Dict(i => bus["index"] for (i, (k, bus)) in enumerate(sort(network_data["bus"], by=x->parse(Int, x))))
+areas = partition(ext2int, network_data["bus"], network_data["branch"])
 
 # area1 = [1:14..., 25, 30, 31, 32, 37, 39]
 # area2 = [15:24..., 26:29..., 33:36..., 38]
@@ -59,9 +62,9 @@ gen_full = network_data["gen"]
 branch_full = network_data["branch"]
 
 # Get the indices of the Ref, PV and PQ buses
-indRef = [bus.second["bus_i"] for bus in bus_full if bus.second["bus_type"] == 3]
-indPV = sort([bus.second["bus_i"] for bus in bus_full if bus.second["bus_type"] == 2])
-indPQ = sort([bus.second["bus_i"] for bus in bus_full if bus.second["bus_type"] == 1])
+indRef = [ext2int[bus.second["bus_i"]] for bus in bus_full if bus.second["bus_type"] == 3]
+indPV = sort([ext2int[bus.second["bus_i"]] for bus in bus_full if bus.second["bus_type"] == 2])
+indPQ = sort([ext2int[bus.second["bus_i"]] for bus in bus_full if bus.second["bus_type"] == 1])
 
 # calculate admittance matrix of full network
 Ybus = calc_admittance_matrix(network_data)
@@ -73,10 +76,11 @@ Ydiag = sum(Yadm, dims=1)
 # Save area information in PowerModel object
 for area in areas
     for bus in area.second
-        bus_full["$bus"]["area"] = area.first
+        bus_full["$(int2ext[bus])"]["area"] = area.first
     end
 end
 
+println()
 # Get voltages and apparent powers from the load flow case
 _pf = (pfMethod == 2 ? PowerModels.build_opf : PowerModels.build_pf)
 # create PF model
@@ -93,7 +97,7 @@ solution = results["solution"]
 bus = zeros(Float64, (no_buses, 9))
 # sorted buses in 1:no_buses
 for bs in bus_sol
-    id = parse(Int64, bs.first)
+    id = ext2int[parse(Int64, bs.first)]
     bus[id, BUS_ID:BUS_TYPE] = [id, bus_data[bs.first]["bus_type"]]
     bus[id, VM:VA] = [bs.second["vm"], bs.second["va"]]
 end
@@ -102,7 +106,7 @@ end
 branch = zeros(Int64, (no_branches, 2))
 for ln in branch_data
     id = parse(Int64, ln.first)
-    branch[id, F_BUS:T_BUS] = [ln.second["f_bus"], ln.second["t_bus"]]
+    branch[id, F_BUS:T_BUS] = [ext2int[ln.second["f_bus"]], ext2int[ln.second["t_bus"]]]
 end
 
 # generators
@@ -110,7 +114,7 @@ gen = zeros(Float64, (no_gen, GEN_ARRAY_SIZE))
 # sorted buses in 1:no_buses
 for gn in gen_data
     id = parse(Int64, gn.first)
-    gen[id, GEN_BUS:QG] = [gn.second["gen_bus"], gn.second["pg"], gn.second["qg"]]
+    gen[id, GEN_BUS:QG] = [ext2int[gn.second["gen_bus"]], gn.second["pg"], gn.second["qg"]]
     gen[id, QMAX:VG] = [gn.second["qmax"], gn.second["qmin"], gn.second["vg"]]
     gen[id, MBASE:PMIN] = [gn.second["mbase"], gn.second["gen_status"], gn.second["pmax"], gn.second["pmin"]]
 end
@@ -126,14 +130,14 @@ for gn in gen_data
     if gn.second["gen_status"] > 0
         # check if gen is load :TODO
         # g =find(gen(:, GEN_STATUS) > 0 & gen(:, GEN_BUS) == bus(i, BUS_I) & ~isload(gen))
-        id = gn.second["gen_bus"]
+        id = ext2int[gn.second["gen_bus"]]
         powerRefCaseG[id] += gen_sol[gn.first]["pg"] + 1im * gen_sol[gn.first]["qg"]
     end
 end
 
 # Fill in load
 for ld in load_data
-    id = ld.second["load_bus"]
+    id = ext2int[ld.second["load_bus"]]
     powerRefCaseL[id] = -(ld.second["pd"] + 1im * ld.second["qd"])  # :TODO should it -= here instead?
     bus[id, PD:QD] = [ld.second["pd"], ld.second["qd"]]
 end
@@ -564,7 +568,7 @@ let
             # should be implement more efficient
             bus_shunts = zeros(no_buses, 2)
             for sh in shunts
-                id = Int64(sh.second["shunt_bus"]) # :TODO check if is p.u. or not
+                id = ext2int[Int64(sh.second["shunt_bus"])] # :TODO check if is p.u. or not
                 bus_shunts[id, :] = [sh.second["gs"], sh.second["bs"]]
             end
             for (i, _) in enumerate(indBegin:indBorderEnd)
@@ -635,13 +639,16 @@ let
                     genNew[indGen, QG] = imag(powerRefCase[Int64.(indGenTo)])
                 end
                 # Connecting them to the righ buses in the reduced model
+                println("indGen", indGen)
                 genNew[indGen, GEN_BUS] .= indEnd + ai["shiftGen"] + 1
+                display(genNew)
                 # Moving the generators connected to buses that have become
                 # PQ buses (because the net real power injections were
                 # negative, i.e. the generators generate less than the local
                 # load) to the common PV REI bus BUT deactivating them
                 (indGenPV2PQ, _) = ismember(gen[:, GEN_BUS], ai["PVtoPQbuses"])
                 genNew[indGenPV2PQ, GEN_BUS] .= indEnd + ai["shiftGen"] + 1
+                display(genNew)
                 genNew[indGenPV2PQ, GEN_STATUS] .= -1
             end
         end
@@ -655,6 +662,12 @@ let
     # Change the initial voltages of the generators to be equal to those to
     # the bus to which they are connected
     genBus = Int64.(genNew[:, GEN_BUS])
+    println(genBus, size(genBus))
+    println(genNew[:, VG], size(genNew[:, VG]))
+    display(busNew)
+    println(size(busNew))
+    display(genNew)
+    # genBus = [gen for gen in genBus]
     genNew[:, VG] = busNew[genBus, VM]
 
     # We now have to fill the admittances of the inter area lines.
