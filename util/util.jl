@@ -148,13 +148,13 @@ function branchArrayToDict(id::Int64, branch::Array{Float64,1})
     )
 
     if branch[RATE_A] > 0
-        branch["rate_a"] = branch[RATE_A]
+        br_dict["rate_a"] = branch[RATE_A]
     end
     if branch[RATE_B] > 0
-        branch["rate_b"] = branch[RATE_B]
+        br_dict["rate_b"] = branch[RATE_B]
     end
     if branch[RATE_C] > 0
-        branch["rate_c"] = branch[RATE_C]
+        br_dict["rate_c"] = branch[RATE_C]
     end
     return br_dict
 end

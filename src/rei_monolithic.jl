@@ -30,7 +30,7 @@ selectPV = false
 # network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case118_mod.m")
 # file = "/Users/iasonas/Documents/MATLAB/matpower7.0/data/case39.m"
 # file = "data/Matpower/case118.m"
-file = "data/Matpower/case300.m"
+file = "data/Matpower/case1888rte.m"
 network_data = PowerModels.parse_file(file)
 caseName = split(file, "/")[end]
 # Set power flow model
@@ -54,6 +54,14 @@ areaInfo = PMAreas(:cluster, no_areas, areas)
 # number of buses
 no_buses = length(network_data["bus"])
 no_branches = length(network_data["branch"])
+# remove decommitioned generators?
+for gn in network_data["gen"]
+    if gn.second["gen_status"] == 0
+        delete!(network_data["gen"], gn.first)
+    end
+end
+genext2int = Dict(gen["index"] => i for (i, (k, gen)) in enumerate(sort(network_data["gen"], by=x->parse(Int, x))))
+genint2ext = Dict(i => gen["index"] for (i, (k, gen)) in enumerate(sort(network_data["gen"], by=x->parse(Int, x))))
 no_gen = length(network_data["gen"])
 
 baseMVA = network_data["baseMVA"]
@@ -80,7 +88,6 @@ for area in areas
     end
 end
 
-println()
 # Get voltages and apparent powers from the load flow case
 _pf = (pfMethod == 2 ? PowerModels.build_opf : PowerModels.build_pf)
 # create PF model
@@ -113,7 +120,8 @@ end
 gen = zeros(Float64, (no_gen, GEN_ARRAY_SIZE))
 # sorted buses in 1:no_buses
 for gn in gen_data
-    id = parse(Int64, gn.first)
+    id = genext2int[parse(Int64, gn.first)]
+    println(id)
     gen[id, GEN_BUS:QG] = [ext2int[gn.second["gen_bus"]], gn.second["pg"], gn.second["qg"]]
     gen[id, QMAX:VG] = [gn.second["qmax"], gn.second["qmin"], gn.second["vg"]]
     gen[id, MBASE:PMIN] = [gn.second["mbase"], gn.second["gen_status"], gn.second["pmax"], gn.second["pmin"]]
@@ -814,7 +822,7 @@ let
         end
     else
         for id in 1:size(genNew, 1)
-            case["gen"]["$(id)"] = genArrayToDict(id, genNew[id, :], pm.data["gen"]["$(id)"])
+            case["gen"]["$(id)"] = genArrayToDict(id, genNew[id, :], pm.data["gen"]["$(genint2ext[id])"])
         end
     end
 
@@ -878,4 +886,4 @@ results_red = optimize_model!(pm_red, optimizer=Ipopt.Optimizer)
 
 # print_summary(results_red)
 # print_summary(results_red["solution"])
-# display((results["objective"], results_red["objective"]))
+display((results["objective"], results_red["objective"]))
