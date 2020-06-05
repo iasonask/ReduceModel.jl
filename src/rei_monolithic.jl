@@ -14,7 +14,6 @@ include(joinpath(dirname(@__FILE__), "..", "util/util.jl"))
 println("Calculating REI...")
 
 # REI options
-# opf will change them for using functions as arguments :TODO
 # Define whether we want to run a power flow (1) or an OPF (2)
 pfMethod = 2
 # genGroup: true: group all generators into a big one
@@ -50,11 +49,14 @@ areas = Dict(1 => area1, 2 => area2, 3 => area3)
 
 no_areas = length(areas)
 
+# areaInfo is a structure containing information for the REI of each area
+areaInfo = PMAreas(:cluster, no_areas, areas)
+
+## Initializations
 # number of buses
 no_buses = length(network_data["bus"])
 no_branches = length(network_data["branch"])
 no_gen = length(network_data["gen"])
-# mpc = ext2int(mpcOri) internal mapping when bus ids is not in order :TODO
 
 baseMVA = network_data["baseMVA"]
 bus_full = network_data["bus"]
@@ -80,8 +82,7 @@ for area in areas
     end
 end
 
-## Get voltages and apparent powers from the load flow case
-
+# Get voltages and apparent powers from the load flow case
 _pf = (pfMethod == 2 ? PowerModels.build_opf : PowerModels.build_pf)
 # create PF model
 pm = instantiate_model(network_data, PFModel, _pf)
@@ -110,7 +111,7 @@ for ln in branch_data
 end
 
 # generators
-gen = zeros(Float64, (no_gen, 10))
+gen = zeros(Float64, (no_gen, GEN_ARRAY_SIZE))
 # sorted buses in 1:no_buses
 for gn in gen_data
     id = parse(Int64, gn.first)
@@ -145,8 +146,11 @@ end
 powerRefCase = powerRefCaseG .+ powerRefCaseL
 
 # keep the indices for buses with non-zero injections
+# Take only x coordinates of CartesianIndex
 indNZ = findall(x -> x > 0, real.(powerRefCase))
+indNZ = [i[1] for i in indNZ]
 indPQNZ = findall(x -> x < 0, real.(powerRefCase))
+indPQNZ = [i[1] for i in indPQNZ]
 indRefNZ = intersect(indNZ, indRef)
 indPVNZ = setdiff(indNZ, indRefNZ)
 indPQori = findall(x -> x != 0, bus[:,PD])
@@ -154,8 +158,6 @@ indPQori = findall(x -> x != 0, bus[:,PD])
 ## Construct the new area matrices
 # We then use the information stored in areaNames, to identify the
 # generator and load buses in each area.
-# areaInfo is a structure containing information for the REI of each area
-areaInfo = PMAreas(:cluster, no_areas, areas)
 
 # We will also need to keep information about interarea lines.
 nl = no_branches
@@ -244,7 +246,7 @@ let
         # not done!!! :TODO what does he mean here?
         isRefAgg = in.(indRefNZ, [areaIPVbuses])
         if ~isempty(isRefAgg)
-            warn("One of the aggregated generators was the slack bus!")
+            @warn "One of the aggregated generators was the slack bus!"
         end
 
         (areaIBordRef_log, areaIBordRef_int) = ismember(indRef, indAreaI[bordInArea])
@@ -367,7 +369,6 @@ let
             # Ytot
             Ytot_pv = conj(Stot_pv) / abs(Vtot_pv)^2
         end
-
         if (~isempty(areaIPQbuses))
             if selectPV
                 Stot_pq = sum(powerRefCase[areaIPQbuses])
@@ -492,7 +493,7 @@ let
     areaInfo.data[0] = Dict("nNew" => nNew, "nGenNew" => nGenNew)
 end
 
-## We can now build the new admittance matrix and create the new test case
+## Build the new admittance matrix and create the new test case
 let
     println("Building admittance matrix...")
     # We need the base quantities
@@ -511,7 +512,7 @@ let
     branchNew = zeros(Int(nNew * (nNew-1)/2), BR_ARRAY_SIZE)
 
     if genGroup
-        genNew = zeros(nGenNew, GEN_ARRAY_SIZE)
+        genNew = zeros(areaInfo.data[0]["nGenNew"], GEN_ARRAY_SIZE)
     else
         genNew = gen
     end
@@ -571,9 +572,7 @@ let
                 id = Int64(sh.second["shunt_bus"]) # :TODO check if is p.u. or not
                 bus_shunts[id, :] = [sh.second["gs"], sh.second["bs"]]
             end
-            println(indBegin:indBorderEnd)
             for (i, _) in enumerate(indBegin:indBorderEnd)
-                println(indBorderOri)
                 busNew[i, GS] = bus_shunts[indBorderOri[i], 1]
                 busNew[i, BS] = bus_shunts[indBorderOri[i], 2]
             end
@@ -865,9 +864,10 @@ end
 # reduced = parse_file("/Users/iasonas/Box Sync/KTH/SPINE/Aggregation/Matlab/edited/case39_red_20200602.m")
 reduced = parse_file(joinpath("results", case["name"]*".m"))
 
-pm_red = instantiate_model(reduced, PFModel, build_opf)
+pm_red = instantiate_model(reduced, PFModel, _pf)
 
 results_red = optimize_model!(pm_red, optimizer=Ipopt.Optimizer)
 
-print_summary(results_red)
-print_summary(results_red["solution"])
+# print_summary(results_red)
+# print_summary(results_red["solution"])
+# display((results["objective"], results_red["objective"]))

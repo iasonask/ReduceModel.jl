@@ -42,8 +42,7 @@ const MBASE = 7
 const GEN_STATUS = 8
 const PMAX = 9
 const PMIN = 10
-
-const GEN_ARRAY_SIZE = 21
+const GEN_ARRAY_SIZE = 10
 
 
 struct PMAreas
