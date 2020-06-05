@@ -7,11 +7,11 @@ using SparseArrays, LinearAlgebra
 
 include(joinpath(dirname(@__FILE__), "..", "util/types.jl"))
 include(joinpath(dirname(@__FILE__), "..", "util/util.jl"))
+include(joinpath(dirname(@__FILE__), "..", "util/partition.jl"))
 
 ## Initializations
 
 # REI monolithic script
-println("Calculating REI...")
 
 # REI options
 # Define whether we want to run a power flow (1) or an OPF (2)
@@ -32,16 +32,11 @@ selectPV = false
 file = "data/Matpower/case118.m"
 network_data = PowerModels.parse_file(file)
 caseName = split(file, "/")[end]
-
 # Set power flow model
 PFModel = ACPPowerModel
 
 # areas
-# hardcoded areas for now
-area1 = [1:23..., 25:32..., 113:115..., 117]
-area2 = [33:67...]
-area3 = [24, 68:112..., 116, 118]
-areas = Dict(1 => area1, 2 => area2, 3 => area3)
+areas = partition(network_data["bus"], network_data["branch"])
 
 # area1 = [1:14..., 25, 30, 31, 32, 37, 39]
 # area2 = [15:24..., 26:29..., 33:36..., 38]
