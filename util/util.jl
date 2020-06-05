@@ -43,7 +43,10 @@ function ismember(a, b)
 end
 
 function readBrDict(br_i)
-    [br_i["f_bus"] br_i["t_bus"] br_i["br_r"] br_i["br_x"] (br_i["b_fr"] + br_i["b_to"]) br_i["rate_a"] br_i["rate_b"] br_i["rate_c"] br_i["transformer"] br_i["shift"] br_i["br_status"] br_i["angmin"] br_i["angmax"]]
+    rate_a = get(br_i, "rate_a", 0)
+    rate_b = get(br_i, "rate_b", 0)
+    rate_c = get(br_i, "rate_c", 0)
+    [br_i["f_bus"] br_i["t_bus"] br_i["br_r"] br_i["br_x"] (br_i["b_fr"] + br_i["b_to"]) rate_a rate_b rate_c br_i["transformer"] br_i["shift"] br_i["br_status"] br_i["angmin"] br_i["angmax"]]
 end
 
 function busArrayToDict(bus::Array{Float64, 1})

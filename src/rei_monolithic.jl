@@ -29,20 +29,25 @@ selectPV = false
 # network_data = PowerModels.parse_file("../examples/case5.m")
 # network_data = PowerModels.parse_file("../data/Matpower/case118.m")
 # network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case118_mod.m")
-network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case39.m")
-caseName = "case39.m"
+# file = "/Users/iasonas/Documents/MATLAB/matpower7.0/data/case39.m"
+file = "data/Matpower/case118.m"
+network_data = PowerModels.parse_file(file)
+caseName = split(file, "/")[end]
 
 # Set power flow model
 PFModel = ACPPowerModel
 
 # areas
 # hardcoded areas for now
-# area1 = [1:23..., 25:32..., 113:115..., 117]
-# area2 = [33:67...]
-# area3 = [24, 68:112..., 116, 118]
-area1 = [1:14..., 25, 30, 31, 32, 37, 39]
-area2 = [15:24..., 26:29..., 33:36..., 38]
-areas = Dict(1 => area1, 2 => area2)
+area1 = [1:23..., 25:32..., 113:115..., 117]
+area2 = [33:67...]
+area3 = [24, 68:112..., 116, 118]
+areas = Dict(1 => area1, 2 => area2, 3 => area3)
+
+# area1 = [1:14..., 25, 30, 31, 32, 37, 39]
+# area2 = [15:24..., 26:29..., 33:36..., 38]
+# areas = Dict(1 => area1, 2 => area2)
+
 no_areas = length(areas)
 
 # number of buses
@@ -150,7 +155,7 @@ indPQori = findall(x -> x != 0, bus[:,PD])
 # We then use the information stored in areaNames, to identify the
 # generator and load buses in each area.
 # areaInfo is a structure containing information for the REI of each area
-areaInfo = PMAreas(:cluster, 2, areas)
+areaInfo = PMAreas(:cluster, no_areas, areas)
 
 # We will also need to keep information about interarea lines.
 nl = no_branches
@@ -547,9 +552,10 @@ let
         busNew[indBegin:indEnd, QD] = ai["busQD"]
 
         # indices of the PV bus to set voltages
-        indPV_int = ai["areaIPV"][] + indBegin - 1
-        busNew[indPV_int, VM] = abs(ai["Vtot"][])
-        busNew[indPV_int, VA] = angle(ai["Vtot"][]) # in rad -> / π * 180 for degs
+        # display(ai["areaIPV"])
+        indPV_int = ai["areaIPV"] .+ indBegin .- 1
+        busNew[indPV_int, VM] = abs.(ai["Vtot"])
+        busNew[indPV_int, VA] = angle.(ai["Vtot"]) # in rad -> / π * 180 for degs
 
         # Copying the BS and GS values of the border buses from the original
         # buses
@@ -562,10 +568,12 @@ let
             # should be implement more efficient
             bus_shunts = zeros(no_buses, 2)
             for sh in shunts
-                id = parse(Int64, sh.second["shunt_bus"]) # :TODO check if is p.u. or not
+                id = Int64(sh.second["shunt_bus"]) # :TODO check if is p.u. or not
                 bus_shunts[id, :] = [sh.second["gs"], sh.second["bs"]]
             end
-            for i in indBegin:indBorderEnd
+            println(indBegin:indBorderEnd)
+            for (i, _) in enumerate(indBegin:indBorderEnd)
+                println(indBorderOri)
                 busNew[i, GS] = bus_shunts[indBorderOri[i], 1]
                 busNew[i, BS] = bus_shunts[indBorderOri[i], 2]
             end
@@ -602,9 +610,9 @@ let
             idxBusGen_areai = ai["indE"][indGenBord_log] # getting the PV buses
             for i in 1:length(idxBusGen_areai)
                 # Getting all generators connected to bus idxBusGen_areai(i)
-                (indGenBord_i, _) = ismember(gen[:, GEN_BUS], idxBusGen_areai[i])
+                (indGenBord_i, _) = ismember(gen[:, GEN_BUS], [idxBusGen_areai[i]])
                 # Changing the bus number of all these generators
-                genNew[indGenBord_i, GEN_BUS] = indBegin + indGenBord_log[i] - 1 # :TODO check this as well
+                genNew[indGenBord_i, GEN_BUS] .= indBegin + indGenBord_log[i] - 1 # :TODO check this as well
             end
         end
 
@@ -647,7 +655,7 @@ let
         # Saving the indices and updating indBegin
         indAreas[1, a] = indBegin
         indAreas[2, a] = indEnd
-        indBegin = indBegin + sizeAi
+        indBegin += sizeAi
     end
 
     # Change the initial voltages of the generators to be equal to those to
@@ -850,12 +858,12 @@ if save
     pmodel_string = export_matpower(case)
     # save model in file
     s = sprint(print, pmodel_string)
-    write(case["name"]*".m", s)
+    write(joinpath("results", case["name"]*".m"), s)
 end
 
 ## test results
 # reduced = parse_file("/Users/iasonas/Box Sync/KTH/SPINE/Aggregation/Matlab/edited/case39_red_20200602.m")
-reduced = parse_file("case39_reduced.m")
+reduced = parse_file(joinpath("results", case["name"]*".m"))
 
 pm_red = instantiate_model(reduced, PFModel, build_opf)
 
