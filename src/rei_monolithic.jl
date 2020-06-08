@@ -2,7 +2,7 @@
 
 using Revise
 using PowerModels
-using Ipopt, Gurobi
+using Ipopt, Gurobi, MosekTools
 using SparseArrays, LinearAlgebra
 
 include(joinpath(dirname(@__FILE__), "..", "util/types.jl"))
@@ -25,21 +25,21 @@ genGroup = false
 selectPV = false
 
 # load network_data
-# network_data = PowerModels.parse_file("../examples/case5.m")
-# network_data = PowerModels.parse_file("../data/Matpower/case118.m")
 # network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case118_mod.m")
 # file = "/Users/iasonas/Documents/MATLAB/matpower7.0/data/case39.m"
 # file = "data/Matpower/case118.m"
-file = "data/Matpower/case1888rte.m"
+file = "data/Matpower/case39.m"
+# file = "data/Matpower/case1951rte.m"
 network_data = PowerModels.parse_file(file)
 caseName = split(file, "/")[end]
 # Set power flow model
 PFModel = ACPPowerModel
+opt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
 
 # areas
 ext2int = Dict(bus["index"] => i for (i, (k, bus)) in enumerate(sort(network_data["bus"], by=x->parse(Int, x))))
 int2ext = Dict(i => bus["index"] for (i, (k, bus)) in enumerate(sort(network_data["bus"], by=x->parse(Int, x))))
-areas = partition(ext2int, network_data["bus"], network_data["branch"])
+areas = partition(2, ext2int, network_data["bus"], network_data["branch"])
 
 # area1 = [1:14..., 25, 30, 31, 32, 37, 39]
 # area2 = [15:24..., 26:29..., 33:36..., 38]
@@ -54,7 +54,7 @@ areaInfo = PMAreas(:cluster, no_areas, areas)
 # number of buses
 no_buses = length(network_data["bus"])
 no_branches = length(network_data["branch"])
-# remove decommitioned generators?
+# remove decommitioned generators? :TODO check also unused branches
 for gn in network_data["gen"]
     if gn.second["gen_status"] == 0
         delete!(network_data["gen"], gn.first)
@@ -93,7 +93,7 @@ _pf = (pfMethod == 2 ? PowerModels.build_opf : PowerModels.build_pf)
 # create PF model
 pm = instantiate_model(network_data, PFModel, _pf)
 # run the power flow
-results = optimize_model!(pm, optimizer=Ipopt.Optimizer)
+results = optimize_model!(pm, optimizer=opt)
 
 # results = ext2int(results) internal mapping when bus ids are not in order :TODO
 solution = results["solution"]
@@ -121,7 +121,6 @@ gen = zeros(Float64, (no_gen, GEN_ARRAY_SIZE))
 # sorted buses in 1:no_buses
 for gn in gen_data
     id = genext2int[parse(Int64, gn.first)]
-    println(id)
     gen[id, GEN_BUS:QG] = [ext2int[gn.second["gen_bus"]], gn.second["pg"], gn.second["qg"]]
     gen[id, QMAX:VG] = [gn.second["qmax"], gn.second["qmin"], gn.second["vg"]]
     gen[id, MBASE:PMIN] = [gn.second["mbase"], gn.second["gen_status"], gn.second["pmax"], gn.second["pmin"]]
@@ -647,16 +646,13 @@ let
                     genNew[indGen, QG] = imag(powerRefCase[Int64.(indGenTo)])
                 end
                 # Connecting them to the righ buses in the reduced model
-                println("indGen", indGen)
                 genNew[indGen, GEN_BUS] .= indEnd + ai["shiftGen"] + 1
-                display(genNew)
                 # Moving the generators connected to buses that have become
                 # PQ buses (because the net real power injections were
                 # negative, i.e. the generators generate less than the local
                 # load) to the common PV REI bus BUT deactivating them
                 (indGenPV2PQ, _) = ismember(gen[:, GEN_BUS], ai["PVtoPQbuses"])
                 genNew[indGenPV2PQ, GEN_BUS] .= indEnd + ai["shiftGen"] + 1
-                display(genNew)
                 genNew[indGenPV2PQ, GEN_STATUS] .= -1
             end
         end
@@ -670,11 +666,6 @@ let
     # Change the initial voltages of the generators to be equal to those to
     # the bus to which they are connected
     genBus = Int64.(genNew[:, GEN_BUS])
-    println(genBus, size(genBus))
-    println(genNew[:, VG], size(genNew[:, VG]))
-    display(busNew)
-    println(size(busNew))
-    display(genNew)
     # genBus = [gen for gen in genBus]
     genNew[:, VG] = busNew[genBus, VM]
 
@@ -880,10 +871,11 @@ end
 # reduced = parse_file("/Users/iasonas/Box Sync/KTH/SPINE/Aggregation/Matlab/edited/case39_red_20200602.m")
 reduced = parse_file(joinpath("results", case["name"]*".m"))
 
-pm_red = instantiate_model(reduced, PFModel, _pf)
+pm_red = instantiate_model(reduced, ACPPowerModel, _pf)
 
-results_red = optimize_model!(pm_red, optimizer=Ipopt.Optimizer)
+results_red = optimize_model!(pm_red, optimizer=opt)
 
 # print_summary(results_red)
 # print_summary(results_red["solution"])
+display(results_red["termination_status"])
 display((results["objective"], results_red["objective"]))
