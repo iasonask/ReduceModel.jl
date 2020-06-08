@@ -11,7 +11,7 @@ push!(pyimport("sys")["path"], dirname(@__FILE__))
 nl = pyimport("network_layout")
 
 
-function partition(clusters, ext2int, bus_data, branch_data)
+function partition(clusters, ext2int, bus_data, branch_data, plots=true)
     """ Partition network into areas based on coordinates and Scikit method 'method'. """
 
     bus_ = zeros(length(bus_data), 2)
@@ -27,7 +27,10 @@ function partition(clusters, ext2int, bus_data, branch_data)
     xy = nl.network_map(bus_[:, 1], bus_[:, 2], br_[:, 1], br_[:, 2], br_[:, 3])
 
     clustering = kmeans(xy', clusters; maxiter=100)
-    display(scatter(xy[:,1], xy[:,2], marker_z=clustering.assignments, color=:lightrainbow, legend=false))
+
+    if plots
+        display(scatter(xy[:,1], xy[:,2], marker_z=clustering.assignments, color=:lightrainbow, legend=false))
+    end
 
     areas = Dict()
     for area in 1:clusters
