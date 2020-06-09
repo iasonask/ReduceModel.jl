@@ -1,6 +1,5 @@
 using PyCall
 using Clustering
-using Plots
 
 # required python packages
 # numpy
@@ -11,7 +10,7 @@ using Plots
 # net_layout = pyimport("network_layout")
 
 
-function partition(clusters, ext2int, bus_data, branch_data, plots=true)
+function partition(clusters, ext2int, bus_data, branch_data)
     """ Partition network into areas based on coordinates and Scikit method 'method'. """
 
     bus_ = zeros(length(bus_data), 2)
@@ -27,10 +26,6 @@ function partition(clusters, ext2int, bus_data, branch_data, plots=true)
     xy = net_layout.network_map(bus_[:, 1], bus_[:, 2], br_[:, 1], br_[:, 2], br_[:, 3])
 
     clustering = kmeans(xy', clusters; maxiter=100)
-
-    if plots
-        display(scatter(xy[:,1], xy[:,2], marker_z=clustering.assignments, color=:lightrainbow, legend=false))
-    end
 
     areas = Dict()
     for area in 1:clusters
