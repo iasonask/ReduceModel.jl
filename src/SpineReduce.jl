@@ -1,7 +1,8 @@
-__precompile__()
+# __precompile__()
 module SpineReduce
 
 # Load packages
+using Revise
 using JuMP
 using PowerModels
 using Ipopt
@@ -20,11 +21,11 @@ include("rei/construct_rei.jl")
 include("rei/call_rei.jl")
 include("rei/reduce_areas.jl")
 
-const nl = PyNULL()
+const net_layout = PyNULL()
 
 function __init__()
-    # push!(pyimport("sys")["path"], joinpath(dirname(@__FILE__), "/util"))
-    copy!(nl, pyimport("util/network_layout"))
+    push!(pyimport("sys")["path"], joinpath(dirname(@__FILE__), "util/"))
+    copy!(net_layout, pyimport("network_layout"))
 end
 
 

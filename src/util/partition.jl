@@ -8,7 +8,7 @@ using Plots
 # scipy
 
 # push!(pyimport("sys")["path"], dirname(@__FILE__))
-# nl = pyimport("network_layout")
+# net_layout = pyimport("network_layout")
 
 
 function partition(clusters, ext2int, bus_data, branch_data, plots=true)
@@ -24,7 +24,7 @@ function partition(clusters, ext2int, bus_data, branch_data, plots=true)
         br_[br.second["index"], :] = [br.second["f_bus"] br.second["t_bus"] br.second["br_x"]]
     end
 
-    xy = nl.network_map(bus_[:, 1], bus_[:, 2], br_[:, 1], br_[:, 2], br_[:, 3])
+    xy = net_layout.network_map(bus_[:, 1], bus_[:, 2], br_[:, 1], br_[:, 2], br_[:, 3])
 
     clustering = kmeans(xy', clusters; maxiter=100)
 
