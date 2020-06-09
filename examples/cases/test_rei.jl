@@ -1,5 +1,5 @@
 ## Initializations
-using SpineReduce
+using ReduceModel
 
 # load network_data
 # network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case118_mod.m")

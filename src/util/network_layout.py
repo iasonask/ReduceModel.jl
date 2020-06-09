@@ -11,7 +11,6 @@ Makes a layout of an electric grid
 For more information and citation:
 J.Olauson, M.Marin, L.Söder
 "Creating power system network layouts: A fast algorithm suitable for Python and Matlab"
-submitted to IEEE transactions on power systems
 
 Note that time.clock() is used for timing
 In this implementation, the network needs to be fully connected

@@ -1,5 +1,5 @@
 # __precompile__()
-module SpineReduce
+module ReduceModel
 
 # Load packages
 using Revise
