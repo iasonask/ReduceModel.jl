@@ -15,7 +15,7 @@ function call_rei(
     options::REIOptions=REIOptions(),
     optimizer=Ipopt.Optimizer,
     export_file=true,
-    path=dirname(@__DIR__),
+    path=@__DIR__,
     no_tries=NO_TRIES,
     )
 
