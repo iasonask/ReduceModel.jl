@@ -1,0 +1,4 @@
+name = "SpineReduce"
+uuid = "2087d03a-d8cb-4429-ba62-6f7fcb55f709"
+authors = ["Iasonas Kouveliotis-Lysikatos <iasonas@kth.se>"]
+version = "0.1.0"

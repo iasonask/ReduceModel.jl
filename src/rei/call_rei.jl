@@ -15,7 +15,7 @@ function call_rei(
     options::REIOptions=REIOptions(),
     optimizer=Ipopt.Optimizer,
     export_file=true,
-    path="./"
+    path="./",
     no_tries=NO_TRIES,
     )
 
@@ -41,9 +41,6 @@ function call_rei(
         aggregateAreas!(areaInfo, network_data, options, optimizer)
 
         case = reduce_network(areaInfo, options)
-
-        print_summary(case)
-        println(typeof(case))
 
         pm_red = instantiate_model(case, PFModel, _pf)
 

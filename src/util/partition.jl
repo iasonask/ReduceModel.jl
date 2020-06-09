@@ -7,8 +7,8 @@ using Plots
 # matplotlib
 # scipy
 
-push!(pyimport("sys")["path"], dirname(@__FILE__))
-nl = pyimport("network_layout")
+# push!(pyimport("sys")["path"], dirname(@__FILE__))
+# nl = pyimport("network_layout")
 
 
 function partition(clusters, ext2int, bus_data, branch_data, plots=true)
