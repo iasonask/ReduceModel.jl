@@ -1,12 +1,13 @@
-## Initializations
+## Test the REI functionality
 using SpineReduce
 
 # load network_data
-# network_data = PowerModels.parse_file("/Users/iasonas/Documents/MATLAB/matpower7.0/data/case118_mod.m")
-# file = "/Users/iasonas/Documents/MATLAB/matpower7.0/data/case39.m"
-file = "data/Matpower/case118.m"
-# file = "data/Matpower/case_ACTIVSg500.m"
-# file = "data/Matpower/case39.m"
-# file = "data/Matpower/case2848rte.m"
+# file = "examples/case118.m"
+# file = "examples/case_ACTIVSg500.m"
+# file = "examples/case_ACTIVSg2000.m"
+# file = "examples/case39.m"
+file = "examples/case300.m"
 
+# calculate rei and return the result in PowerModel dict, choosing number
+# of areas and all other default values
 case = call_rei(file, 4)
