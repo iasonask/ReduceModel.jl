@@ -12,6 +12,7 @@ using PyCall
 
 # Export utility
 export call_rei
+export REIOptions
 
 include("util/types.jl")
 include("util/util.jl")

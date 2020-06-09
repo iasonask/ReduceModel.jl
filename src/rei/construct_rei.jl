@@ -152,7 +152,7 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
                 genNew[indGenBegin, QMAX] = sum(gen[indGen, QMAX]) # :TODO check p.u.!!
                 genNew[indGenBegin, QMIN] = -sum(abs.(gen[indGen, QMIN]))
                 genNew[indGenBegin, VG] = busNew[indEnd + ai["shiftGen"] + 1, VM]
-                genNew[indGenBegin, MBASE] = baseMVA
+                genNew[indGenBegin, MBASE] = network_data["baseMVA"]
                 genNew[indGenBegin, GEN_STATUS] = 1
                 genNew[indGenBegin, PMAX] = sum(gen[indGen, PMAX])
                 genNew[indGenBegin, PMIN] = sum(gen[indGen, PMIN])

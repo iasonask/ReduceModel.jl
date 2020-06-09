@@ -60,21 +60,19 @@ end
 
 struct REIOptions
     # REI options
-    # Define whether we want to run a power flow (1) or an OPF (2)
-    # pfMethod = 2
-
+    # Use pf or opf from PowerModels.build_pf, or .build_opf, etc.
     # genGroup: true: group all generators into a big one
     # false: keep existing generators but moved to the common bus
-
-    # selectPV: true: select the PV buses based on the net power injections, i.e.
-    # some PV buses can become PQ
-    # false: keep the original PV buses
-
+    # selectPV: true: select the PV buses based on the net power injections,
+    # i.e. some PV buses can become PQ, false: keep the original PV buses
     pf_model::DataType
     pf_method::Function
     genGroup::Bool
     selectPV::Bool
     function REIOptions()
         new(ACPPowerModel, build_opf, false, false)
+    end
+    function REIOptions(pf_model, pf_method, genGroup, selectPV)
+        new(pf_model, pf_method, genGroup, selectPV)
     end
 end
