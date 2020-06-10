@@ -64,7 +64,7 @@ function call_rei(
 
         if termination_status(pm_red.model) == MOI.LOCALLY_SOLVED ||
            termination_status(pm_red.model) == MOI.OPTIMAL
-            println("Calulation of REI completed successfully after $(tr) try(ies)!")
+            println("Calulation of REI completed successfully after $(tr) ", tr > 1 ? "tries!" : "try!")
             break
         else
             println(
