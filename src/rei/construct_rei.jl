@@ -107,13 +107,22 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
 
         # The column loadMap stores the bus number to which each original load is
         # moved in the reduced system
-        loadMap = zeros(no_buses, 1)
+        loadMap = zeros(Int64, no_buses, 1)
 
         # We can now fill in the column mapping the original buses to the new
         # ones (for the load):
-        loadMap[indBorderOri] .= indBegin:indBorderEnd
+
+        loadMap[indBorderOri] = collect(indBegin:indBorderEnd)
         if (ai["shiftLoad"] == -1) # otherwise there is no REI load bus
             loadMap[indNonBorderOri] .= indEnd + ai["shiftLoad"] + 1
+        end
+
+        # keep buses Mapping in areaInfo as well
+        if ~haskey(areaInfo.data[0], "mapping")
+            areaInfo.data[0]["mapping"] = loadMap
+        else
+            I = findall(x -> x > 0, loadMap)
+            areaInfo.data[0]["mapping"][I] = loadMap[I]
         end
 
         # Filling info about the generators lying on the border buses
@@ -372,5 +381,7 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
     end
 
     PowerModels.correct_network_data!(case)
+    # append also area information to case dict
+    case["areas"] = areaInfo
     case
 end
