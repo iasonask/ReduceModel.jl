@@ -282,7 +282,7 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
                 # If one of the border line goes from bus i to bus j and from
                 # bus j to bus i
                 if ~isempty(indBorderLine2)
-                    println("Line not considered:($(i),$(j))")
+                    #println("Line not considered:($(i),$(j))")
                 else
                     branchNew[indBrBegin + j - (i+1), BR_R] = -real(1/YadmNew[i, j])
                     branchNew[indBrBegin + j - (i+1), BR_X] = -imag(1/YadmNew[i, j])
