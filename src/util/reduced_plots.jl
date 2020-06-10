@@ -12,7 +12,7 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
     scale_factor_EB=1.4,
     scale_factor_red=1,
     scale_factor_EB_red=0.5,
-    font_size=8,
+    font_size=10,
     )
 
     # Prepare Network layout
@@ -192,6 +192,9 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
         title = ["Original Network" "Reduced Network"],
         titleloc = :center,
         titlefont = font(font_size),
+        grid = false
     )
+    xaxis!(p, false)
+    yaxis!(p, false)
     p
 end
