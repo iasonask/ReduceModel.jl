@@ -11,7 +11,7 @@ using Clustering
 
 
 function partition(clusters, ext2int, bus_data, branch_data)
-    """ Partition network into areas based on coordinates and Scikit method 'method'. """
+    """ Partition network into areas based on coordinates. """
 
     bus_ = zeros(length(bus_data), 2)
     for bus in bus_data

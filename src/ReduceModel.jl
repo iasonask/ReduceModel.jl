@@ -9,14 +9,17 @@ using Ipopt
 using SparseArrays
 using LinearAlgebra
 using PyCall
+using Plots
 
 # Export utility
 export call_rei
 export REIOptions
+export makePlots
 
 include("util/types.jl")
 include("util/util.jl")
 include("util/partition.jl")
+include("util/reduced_plots.jl")
 
 include("rei/construct_rei.jl")
 include("rei/call_rei.jl")
