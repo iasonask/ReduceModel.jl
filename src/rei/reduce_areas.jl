@@ -358,7 +358,7 @@ function aggregateAreas!(areaInfo::PMAreas, network_data::Dict{String,Any}, opti
 
         # Saving the values of the voltages of the PV buses
         areaInfoI["Vtot"] = [voltagesRefCase[sort([areaIBordPV; areaIBordRef])]; Vtot_pv]
-        areaInfoI["Vtotpq"] = Vtot_pq
+        areaInfoI["Vtotpq"] = ~(@isdefined Vtot_pq) ? Vtot_pq = 1 + 0im : Vtot_pq
 
         # Filling in the info about the buses
         # column 1: bus type

@@ -2,7 +2,6 @@
 module ReduceModel
 
 # Load packages
-using Revise
 using JuMP
 using PowerModels
 using Ipopt

@@ -76,8 +76,14 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
         # Filling in the infos about the buses
         busNew[indBegin:indEnd, BUS_AREA] .= a
         busNew[indBegin:indEnd, BUS_TYPE] .= ai["busTypes"]
-        busNew[indBegin:indEnd, PD] = ai["busPD"]
-        busNew[indBegin:indEnd, QD] = ai["busQD"]
+        try
+            busNew[indBegin:indEnd, PD] = ai["busPD"]
+            busNew[indBegin:indEnd, QD] = ai["busQD"]
+        catch e
+           println("Problematic clustering solution, reducing the number of clusters could help.")
+           busNew[indBegin:indEnd, PD] .= 0
+           busNew[indBegin:indEnd, QD] .= 0
+        end
 
         # indices of the PV bus to set voltages
         # display(ai["areaIPV"])

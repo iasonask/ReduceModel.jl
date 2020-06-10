@@ -6,7 +6,7 @@ Create plots for the original and the reduced network
 
 """
 
-function makePlots(original_net, reduced_net)
+function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any})
 
     # Prepare Network layout
     # original network

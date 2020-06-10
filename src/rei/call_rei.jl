@@ -12,12 +12,12 @@ Create a Reduced Equivalent Independent power model
 function call_rei(
     file::String,
     no_areas::Int64;
-    options::REIOptions=REIOptions(),
-    optimizer=Ipopt.Optimizer,
-    export_file=true,
-    path=@__DIR__,
-    no_tries=NO_TRIES,
-    )
+    options::REIOptions = REIOptions(),
+    optimizer = Ipopt.Optimizer,
+    export_file = true,
+    path = @__DIR__,
+    no_tries = NO_TRIES,
+)
 
     println("Starting REI calculation...")
     network_data = PowerModels.parse_file(file)
@@ -27,17 +27,27 @@ function call_rei(
     _pf = options.pf_method
 
     # reduced model
-    case = Dict{String, any}
+    case = Dict{String,any}
 
     # areas
-    ext2int = Dict(bus["index"] => i for (i, (k, bus)) in enumerate(sort(network_data["bus"], by=x->parse(Int, x))))
+    ext2int = Dict(
+        bus["index"] => i
+        for
+        (i, (k, bus)) in
+        enumerate(sort(network_data["bus"], by = x -> parse(Int, x)))
+    )
 
     # the non-deterministic clustering solution might cause admittance singularity
     # issues, the procedure is repeated no_tries times for improving the chances
     # of calculating a convergent power flow model
-    for tr in 1:no_tries
+    for tr = 1:no_tries
         println("Trying to calculate REI, iteration: $(tr).")
-        areas = partition(no_areas, ext2int, network_data["bus"], network_data["branch"])
+        areas = partition(
+            no_areas,
+            ext2int,
+            network_data["bus"],
+            network_data["branch"],
+        )
         # a PMAreas data structure holds all relevant parameters and values for
         # the reduction procedure
         areaInfo = PMAreas(:cluster, no_areas, areas)
@@ -50,14 +60,20 @@ function call_rei(
 
         # test that the calculated model converges
         pm_red = instantiate_model(case, PFModel, _pf)
-        results_red = optimize_model!(pm_red, optimizer=optimizer)
+        results_red = optimize_model!(pm_red, optimizer = optimizer)
 
         if termination_status(pm_red.model) == MOI.LOCALLY_SOLVED ||
-            termination_status(pm_red.model) == MOI.OPTIMAL
+           termination_status(pm_red.model) == MOI.OPTIMAL
             println("Calulation of REI completed successfully after $(tr) try(ies)!")
             break
         else
-            println("Calulation of REI failed: $(termination_status(pm_red.model))," * (tr < NO_TRIES ?  " trying again." : " exiting."))
+            println(
+                "Calulation of REI failed: $(termination_status(pm_red.model))," *
+                (
+                    tr < NO_TRIES ? " trying again." :
+                    " exiting, consider choosing different options for the REI calculation."
+                ),
+            )
         end
     end
 
@@ -67,7 +83,7 @@ function call_rei(
         # save model in file
         s = sprint(print, pmodel_string)
         println("Writing results case...")
-        write(joinpath(path, case["name"]*".m"), s)
+        write(joinpath(path, case["name"] * ".m"), s)
     end
     case
 end
