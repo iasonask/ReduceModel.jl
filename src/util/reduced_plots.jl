@@ -6,7 +6,14 @@ Create plots for the original and the reduced network
 
 """
 
-function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any})
+function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any};
+    width=500,
+    scale_factor=8,
+    scale_factor_EB=1.4,
+    scale_factor_red=1,
+    scale_factor_EB_red=0.5,
+    font_size=8,
+    )
 
     # Prepare Network layout
     # original network
@@ -47,9 +54,6 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
     # set colors
     colors = palette(:lightrainbow, length(areas))
     plt = scatter()
-    # estimated area of graph
-    scale_factor = 8
-    scale_factor_EB = 1.4
 
     # add lines
     for br in branch
@@ -145,8 +149,6 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
     end
 
     gr_area = abs(minimum(xy_full_red)) * abs(maximum(xy_full_red))
-    scale_factor_red = 1
-    scale_factor_EB_red = 0.5
     marker_size_red = gr_area / (scale_factor_red * length(bus))
 
     areas_reduced = Dict(
@@ -180,7 +182,6 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
         )
     end
 
-    width = 500
     phi = MathConstants.golden
 
     p = plot(
@@ -190,7 +191,7 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
         size = (width, width * phi),
         title = ["Original Network" "Reduced Network"],
         titleloc = :center,
-        titlefont = font(8),
+        titlefont = font(font_size),
     )
     p
 end
