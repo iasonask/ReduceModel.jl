@@ -14,6 +14,7 @@ using Plots
 export call_rei
 export REIOptions
 export makePlots
+export plot_grid
 
 include("util/types.jl")
 include("util/util.jl")

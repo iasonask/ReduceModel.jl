@@ -113,7 +113,7 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
 
         # The column loadMap stores the bus number to which each original load is
         # moved in the reduced system
-        loadMap = zeros(Int64, no_buses, 1)
+        loadMap = zeros(Int64, no_buses)
 
         # We can now fill in the column mapping the original buses to the new
         # ones (for the load):

@@ -10,20 +10,64 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
     width=500,
     scale_factor=8,
     scale_factor_EB=1.4,
-    scale_factor_red=1,
-    scale_factor_EB_red=0.5,
+    scale_factor_red=8,
+    scale_factor_EB_red=1.4,
     font_size=10,
     )
 
     # Prepare Network layout
     # original network
-    bus = original_net["bus"]
-    branch = original_net["branch"]
+    areas = reduced_net["areas"].clusters
+
+    border_bus = vcat([
+        bs.second["indE"] for bs in reduced_net["areas"].data if bs.first > 0
+    ]...)
+    plt, xy_full = plot_grid(original_net, areas, border_bus; scale_factor=scale_factor, scale_factor_EB=scale_factor_EB, linealpha=0.5)
+
+    # plot reduced network
+    bus_key = reduced_net["areas"].data[0]["mapping"]
+    heavy = PyDict(Dict(
+        b => [x y]
+        for
+        (b, x, y) in zip(
+            bus_key[border_bus],
+            xy_full[border_bus, 1],
+            xy_full[border_bus, 2],
+        )
+    ))
+    plt_red, xy_full_red = plot_grid(reduced_net, areas, border_bus, bus_key, heavy; scale_factor=scale_factor_red, scale_factor_EB=scale_factor_EB_red, linealpha=0.1)
+
+    phi = MathConstants.golden
+
+    # combine plots
+    p = plot(
+        plt,
+        plt_red,
+        layout = grid(2, 1),
+        size = (width, width * phi),
+        title = ["Original Network" "Reduced Network"],
+        titleloc = :center,
+        titlefont = font(font_size),
+        grid = false
+    )
+    xaxis!(p, false)
+    yaxis!(p, false)
+    p
+end
+
+function plot_grid(network::Dict{String, Any}, areas::Dict{Int64, Array{Int64,1}}, border_bus::Array{Int64,1};
+    scale_factor=scale_factor,
+    scale_factor_EB=scale_factor_EB,
+    linealpha=linealpha,
+    )
+
+    bus = network["bus"]
+    branch = network["branch"]
     ext2int = Dict(
         bus["index"] => i
         for
         (i, (k, bus)) in
-        enumerate(sort(original_net["bus"], by = x -> parse(Int, x)))
+        enumerate(sort(network["bus"], by = x -> parse(Int, x)))
     )
     bus_ = zeros(length(bus), 2)
     for bus in bus
@@ -45,11 +89,6 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
         br_[:, 2],
         br_[:, 3],
     )
-    areas = reduced_net["areas"].clusters
-
-    border_bus = vcat([
-        bs.second["indE"] for bs in reduced_net["areas"].data if bs.first > 0
-    ]...)
 
     # set colors
     colors = palette(:lightrainbow, length(areas))
@@ -67,7 +106,7 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
                 ext2int[br.second["t_bus"]],
                 2,
             ]]'
-        plot!(plt, xl, yl, color = "black", linealpha = 0.5, legend = false)
+        plot!(plt, xl, yl, color = "black", linealpha = linealpha, legend = false)
     end
 
     graph_area = abs(minimum(xy_full)) * abs(maximum(xy_full))
@@ -77,7 +116,6 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
         # scatter each area
         # add non_border buses
         non_border = [bs for bs in area.second if ~(bs in border_bus)]
-        # non_border = [bs for bs in area if ~(bs in border_bus)]
         scatter!(
             xy_full[:, 1][non_border],
             xy_full[:, 2][non_border],
@@ -96,105 +134,87 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
             legend = false,
         )
     end
+    plt, xy_full
+end
 
-    # plot reduced network
-    bus_key = reduced_net["areas"].data[0]["mapping"]
-    # heavy = PyDict(Dict(b - 1 => xy_full[b, :] for b in border_bus))
-    heavy = PyDict(Dict(
-        b => [x y]
-        for
-        (b, x, y) in zip(
-            bus_key[border_bus],
-            xy_full[border_bus, 1],
-            xy_full[border_bus, 2],
-        )
-    ))
+function plot_grid(network::Dict{String, Any}, areas::Dict{Int64, Array{Int64, 1}}, border_bus::Array{Int64, 1}, bus_key::Array{Int64,1}, heavy::PyDict;
+    scale_factor=scale_factor,
+    scale_factor_EB=scale_factor_EB,
+    linealpha=linealpla,
+    )
 
-    bus_red_ = zeros(length(reduced_net["bus"]), 2)
-    for bus in reduced_net["bus"]
-        bus_red_[bus.second["bus_i"], :] =
+    # set colors
+    colors = palette(:lightrainbow, length(areas))
+
+    bus_ = zeros(length(network["bus"]), 2)
+    for bus in network["bus"]
+        bus_[bus.second["bus_i"], :] =
             [bus.second["bus_i"] bus.second["vm"]]
     end
 
-    br_red_ = zeros(length(reduced_net["branch"]), 3)
-    for br in reduced_net["branch"]
-        br_red_[br.second["index"], :] =
+    br_ = zeros(length(network["branch"]), 3)
+    for br in network["branch"]
+        br_[br.second["index"], :] =
             [br.second["f_bus"] br.second["t_bus"] br.second["br_x"]]
     end
 
-    # println("Calculating network map of reduced network...")
-    xy_full_red = ReduceModel.net_layout.network_map(
-        bus_red_[:, 1],
+    xy_full = ReduceModel.net_layout.network_map(
+        bus_[:, 1],
         bus_[:, 2],
-        br_red_[:, 1],
-        br_red_[:, 2],
-        br_red_[:, 3],
+        br_[:, 1],
+        br_[:, 2],
+        br_[:, 3],
         heavy = heavy,
     )
 
-    plt1 = scatter()
+    plt = scatter()
     # add lines
-    for br in reduced_net["branch"]
+    for br in network["branch"]
         xl =
-            [xy_full_red[br.second["f_bus"], 1] xy_full_red[
+            [xy_full[br.second["f_bus"], 1] xy_full[
                 br.second["t_bus"],
                 1,
             ]]'
         yl =
-            [xy_full_red[br.second["f_bus"], 2] xy_full_red[
+            [xy_full[br.second["f_bus"], 2] xy_full[
                 br.second["t_bus"],
                 2,
             ]]'
-        plot!(plt1, xl, yl, color = "black", linealpha = 0.1, legend = false)
+        plot!(plt, xl, yl, color = "black", linealpha = linealpha, legend = false)
     end
 
-    gr_area = abs(minimum(xy_full_red)) * abs(maximum(xy_full_red))
-    marker_size_red = gr_area / (scale_factor_red * length(bus))
+    gr_area = abs(minimum(xy_full)) * abs(maximum(xy_full))
+    marker_size = gr_area / (scale_factor * length(network["bus"]))
 
     areas_reduced = Dict(
         [area => [
-            b[2]["bus_i"] for b in reduced_net["bus"] if b[2]["zone"] == area
+            b[2]["bus_i"] for b in network["bus"] if b[2]["zone"] == area
         ] for area = 1:length(areas)],
     )
-    border_bus_red = bus_key[border_bus]
+    border_bus = bus_key[border_bus]
     # border buses
     for area in areas_reduced
         # scatter each area
         # add non_border buses
-        non_border = [bs for bs in area.second if ~(bs in border_bus_red)]
+        non_border = [bs for bs in area.second if ~(bs in border_bus)]
         scatter!(
-            plt1,
-            xy_full_red[non_border, 1],
-            xy_full_red[non_border, 2],
-            marker = (:circle, marker_size_red, 0.7),
+            plt,
+            xy_full[non_border, 1],
+            xy_full[non_border, 2],
+            marker = (:circle, marker_size, 0.7),
             color = colors[area.first],
             legend = false,
         )
         # add border buses
-        border = [bs for bs in area.second if (bs in border_bus_red)]
+        border = [bs for bs in area.second if (bs in border_bus)]
         scatter!(
-            plt1,
-            xy_full_red[border, 1],
-            xy_full_red[border, 2],
-            marker = (:diamond, marker_size_red * scale_factor_EB_red, 0.7),
+            plt,
+            xy_full[border, 1],
+            xy_full[border, 2],
+            marker = (:diamond, marker_size * scale_factor_EB, 0.7),
             color = colors[area.first],
             legend = false,
         )
     end
-
-    phi = MathConstants.golden
-
-    p = plot(
-        plt,
-        plt1,
-        layout = grid(2, 1),
-        size = (width, width * phi),
-        title = ["Original Network" "Reduced Network"],
-        titleloc = :center,
-        titlefont = font(font_size),
-        grid = false
-    )
-    xaxis!(p, false)
-    yaxis!(p, false)
-    p
+    plt, xy_full
 end

@@ -35,7 +35,8 @@ reduced_case = call_rei(
 using ReduceModel
 using PowerModels, Plots
 using Ipopt
-using Pkg; Pkg.build("GR")
+# using Pkg; Pkg.build("GR")
+# plotlyjs()
 
 rei_opt = REIOptions(ACPPowerModel, build_pf, false, false)
 
