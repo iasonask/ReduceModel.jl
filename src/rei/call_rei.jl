@@ -36,6 +36,10 @@ function call_rei(
         (i, (k, bus)) in
         enumerate(sort(network_data["bus"], by = x -> parse(Int, x)))
     )
+    # create PF model
+    pm = instantiate_model(network_data, PFModel, _pf)
+    # run the power flow
+    optimize_model!(pm, optimizer=optimizer)
 
     # the non-deterministic clustering solution might cause admittance singularity
     # issues, the procedure is repeated no_tries times for improving the chances
@@ -53,7 +57,7 @@ function call_rei(
         areaInfo = PMAreas(:cluster, no_areas, areas)
 
         # calculate the reduced network of each area
-        aggregateAreas!(areaInfo, network_data, options, optimizer)
+        aggregateAreas!(areaInfo, pm, options)
 
         # combine reduced areas back together to a single power flow model
         case = reduce_network(areaInfo, options)

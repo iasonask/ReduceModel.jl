@@ -1,5 +1,5 @@
 """
-     aggregateAreas!(areaInfo::PMAreas, network_data::Dict{String,Any}, options::REIOptions, optimizer) -> areaInfo::PMAreas
+     aggregateAreas!(areaInfo::PMAreas, network_data::Dict{String,Any}, options::REIOptions) -> areaInfo::PMAreas
 
 Create a Reduced Equivalent Independent power model for each area
 
@@ -9,8 +9,9 @@ Create a Reduced Equivalent Independent power model for each area
 
 """
 
-function aggregateAreas!(areaInfo::PMAreas, network_data::Dict{String,Any}, options::REIOptions, optimizer)
+function aggregateAreas!(areaInfo::PMAreas, pm::ACPPowerModel, options::REIOptions)
 
+    network_data = pm.data
     selectPV = options.selectPV
     genGroup = options.genGroup
 
@@ -56,13 +57,7 @@ function aggregateAreas!(areaInfo::PMAreas, network_data::Dict{String,Any}, opti
     end
 
     # Get voltages and apparent powers from the load flow case
-    # create PF model
-    pm = instantiate_model(network_data, options.pf_model, options.pf_method)
-    # run the power flow
-    results = optimize_model!(pm, optimizer=optimizer)
-
-    # results = ext2int(results) internal mapping when bus ids are not in order :TODO
-    solution = results["solution"]
+    solution = pm.solution
     (baseMVA, bus_sol, gen_sol) = (solution["baseMVA"], solution["bus"], solution["gen"])
     (bus_data, gen_data, branch_data, load_data) = (pm.data["bus"], pm.data["gen"], pm.data["branch"], pm.data["load"])
 

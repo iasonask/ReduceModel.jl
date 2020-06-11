@@ -73,6 +73,7 @@ struct REIOptions
         new(ACPPowerModel, build_opf, false, false)
     end
     function REIOptions(pf_model, pf_method, genGroup, selectPV)
-        new(pf_model, pf_method, genGroup, selectPV)
+        @warn "Currently supporting only ACPPowerModel."
+        new(ACPPowerModel, pf_method, genGroup, selectPV)
     end
 end
