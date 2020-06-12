@@ -1,10 +1,7 @@
-# __precompile__()
 module ReduceModel
 
 # Load packages
-using JuMP
 using PowerModels
-using Ipopt
 using SparseArrays
 using LinearAlgebra
 using PyCall

@@ -431,7 +431,7 @@ function aggregateAreas!(areaInfo::PMAreas, pm::ACPPowerModel, options::REIOptio
         # admittance matrix is singular
         # real(sum(inv(YadmAreaI(indNE,indNE)))) :TODO check this comment
         YadmAreaRed = YadmAreaI[indE, indE] - YadmAreaI[indE, indNE] *
-                      inv(Matrix(YadmAreaI[indNE, indNE])) * YadmAreaI[indNE, indE]
+                      pinv(Matrix(YadmAreaI[indNE, indNE])) * YadmAreaI[indNE, indE]
 
         # Here we store the reduced REI matrix, the full REI admittance matrix
         # and the original admittance matrix
@@ -466,6 +466,7 @@ function aggregateAreas!(areaInfo::PMAreas, pm::ACPPowerModel, options::REIOptio
     areaInfo.data[0]["lineInfos"] = lineInfos
     areaInfo.data[0]["Yadm"] = Yadm
     areaInfo.data[0]["original"] = network_data
+    areaInfo.data[0]["powerRefCase"] = powerRefCase
 
     areaInfo
 end

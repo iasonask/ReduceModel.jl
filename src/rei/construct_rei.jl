@@ -20,6 +20,7 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
     selectPV = options.selectPV
     genGroup = options.genGroup
     network_data = areaInfo.data[0]["original"]
+    powerRefCase = areaInfo.data[0]["powerRefCase"]
 
     ext2int = Dict(bus["index"] => i for (i, (k, bus)) in enumerate(sort(network_data["bus"], by=x->parse(Int, x))))
     println("Building admittance matrix...")
@@ -40,6 +41,9 @@ function reduce_network(areaInfo::PMAreas, options::REIOptions)
 
     if genGroup
         genNew = zeros(areaInfo.data[0]["nGenNew"], GEN_ARRAY_SIZE)
+        # fill with ones the GEN_BUS column for avoiding errors when the
+        # clustering solution is problematic
+        genNew[:, GEN_BUS] .= 1
     else
         genNew = areaInfo.data[0]["gen"]
     end

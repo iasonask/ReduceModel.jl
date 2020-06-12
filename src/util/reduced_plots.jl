@@ -91,7 +91,7 @@ function plot_grid(network::Dict{String, Any}, areas::Dict{Int64, Array{Int64,1}
     )
 
     # set colors
-    colors = palette(:lightrainbow, length(areas))
+    colors = Plots.palette(:lightrainbow, max(length(areas), 2))
     plt = scatter()
 
     # add lines
@@ -144,7 +144,7 @@ function plot_grid(network::Dict{String, Any}, areas::Dict{Int64, Array{Int64, 1
     )
 
     # set colors
-    colors = palette(:lightrainbow, length(areas))
+    colors = Plots.palette(:lightrainbow, max(length(areas), 2))
 
     bus_ = zeros(length(network["bus"]), 2)
     for bus in network["bus"]

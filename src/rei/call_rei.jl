@@ -13,7 +13,7 @@ function call_rei(
     file::String,
     no_areas::Int64;
     options::REIOptions = REIOptions(),
-    optimizer = Ipopt.Optimizer,
+    optimizer = optimizer,
     export_file = true,
     path = @__DIR__,
     no_tries = NO_TRIES,
@@ -66,13 +66,13 @@ function call_rei(
         pm_red = instantiate_model(case, PFModel, _pf)
         results_red = optimize_model!(pm_red, optimizer = optimizer)
 
-        if termination_status(pm_red.model) == MOI.LOCALLY_SOLVED ||
-           termination_status(pm_red.model) == MOI.OPTIMAL
+        if results_red["termination_status"] == LOCALLY_SOLVED ||
+           results_red["termination_status"] == OPTIMAL
             println("Calulation of REI completed successfully after $(tr) ", tr > 1 ? "tries!" : "try!")
             break
         else
             println(
-                "Calulation of REI failed: $(termination_status(pm_red.model))," *
+                "Calulation of REI failed: $(results_red["termination_status"])," *
                 (
                     tr < NO_TRIES ? " trying again." :
                     " exiting, consider choosing different options for the REI calculation."
