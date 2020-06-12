@@ -17,12 +17,21 @@ using Ipopt
 rei_opt = REIOptions(ACPPowerModel, build_opf, true, true)
 
 file = joinpath(dirname(@__FILE__), "cases/case300.m")
+<<<<<<< HEAD
 
 original_net = parse_file(file)
 
 reduced_net = call_rei(
     file,
     2;
+=======
+
+original_net = parse_file(file)
+
+reduced_net = call_rei(
+    file,
+    1;
+>>>>>>> fb4e046b425be75b2809e0d0ce6539cee9faeb9b
     options = rei_opt,
     optimizer = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0),
     export_file = false,
@@ -42,12 +51,19 @@ plotlyjs()
 rei_opt = REIOptions(ACPPowerModel, build_pf, false, false)
 
 file = joinpath(dirname(@__FILE__), "cases/case_ACTIVSg2000.m")
+<<<<<<< HEAD
 
 original_net = parse_file(file)
 
 reduced_net = call_rei(
     file,
     4;
+=======
+
+reduced_net = call_rei(
+    file,
+    2;
+>>>>>>> fb4e046b425be75b2809e0d0ce6539cee9faeb9b
     options = rei_opt,
     optimizer = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0),
     export_file = false,
