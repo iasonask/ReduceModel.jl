@@ -39,7 +39,7 @@ function call_rei(
     # create PF model
     pm = instantiate_model(network_data, PFModel, _pf)
     # run the power flow
-    optimize_model!(pm, optimizer=optimizer)
+    optimize_model!(pm, optimizer = optimizer)
 
     # the non-deterministic clustering solution might cause admittance singularity
     # issues, the procedure is repeated no_tries times for improving the chances
@@ -56,23 +56,37 @@ function call_rei(
         # the reduction procedure
         areaInfo = PMAreas(:cluster, no_areas, areas)
 
-        # calculate the reduced network of each area
-        aggregateAreas!(areaInfo, pm, options)
+        try
+            # calculate the reduced network of each area
+            aggregateAreas!(areaInfo, pm, options)
 
-        # combine reduced areas back together to a single power flow model
-        case = reduce_network(areaInfo, options)
+            # combine reduced areas back together to a single power flow model
+            case = reduce_network(areaInfo, options)
 
-        # test that the calculated model converges
-        pm_red = instantiate_model(case, PFModel, _pf)
-        results_red = optimize_model!(pm_red, optimizer = optimizer)
+            # test that the calculated model converges
+            pm_red = instantiate_model(case, PFModel, _pf)
+            results_red = optimize_model!(pm_red, optimizer = optimizer)
 
-        if results_red["termination_status"] == LOCALLY_SOLVED ||
-           results_red["termination_status"] == OPTIMAL
-            println("Calulation of REI completed successfully after $(tr) ", tr > 1 ? "tries!" : "try!")
-            break
-        else
+            if results_red["termination_status"] == LOCALLY_SOLVED ||
+               results_red["termination_status"] == OPTIMAL
+                println(
+                    "Calulation of REI completed successfully after $(tr) ",
+                    tr > 1 ? "tries!" : "try!",
+                )
+                break
+            else
+                println(
+                    "Calulation of REI failed: $(results_red["termination_status"])," *
+                    (
+                        tr < NO_TRIES ? " trying again." :
+                        " exiting, consider choosing different options for the REI calculation."
+                    ),
+                )
+            end
+
+        catch e
             println(
-                "Calulation of REI failed: $(results_red["termination_status"])," *
+                "Calulation of REI failed: possibly problematic REI configuration," *
                 (
                     tr < NO_TRIES ? " trying again." :
                     " exiting, consider choosing different options for the REI calculation."

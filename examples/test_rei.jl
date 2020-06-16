@@ -36,6 +36,7 @@ pl = makePlots(original_net, reduced_net)
 using ReduceModel
 using PowerModels
 using Ipopt
+using Plots
 # using Pkg; Pkg.build("GR")
 plotlyjs()
 
@@ -47,7 +48,7 @@ original_net = parse_file(file)
 
 reduced_net = call_rei(
     file,
-    4;
+    3;
     options = rei_opt,
     optimizer = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0),
     export_file = false,
