@@ -43,8 +43,8 @@ function makePlots(original_net::Dict{String,Any}, reduced_net::Dict{String,Any}
     p = plot(
         plt,
         plt_red,
-        layout = grid(2, 1),
-        size = (width, width * phi),
+        layout = grid(1, 2),
+        size = (width * phi, width),
         title = ["Original Network" "Reduced Network"],
         titleloc = :center,
         titlefont = font(font_size),
