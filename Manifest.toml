@@ -296,9 +296,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[METIS_jll]]
 deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "58ddd4e4cdd24ead2949d2bd4114208d70c49da5"
+git-tree-sha1 = "3f52ed323683398498ef163a45ce998f1ceca363"
 uuid = "d00139f3-1899-568f-a2f0-47f597d42d70"
-version = "5.1.0+3"
+version = "5.1.0+4"
 
 [[MUMPS_seq_jll]]
 deps = ["CompilerSupportLibraries_jll", "Libdl", "METIS_jll", "OpenBLAS32_jll", "Pkg"]
@@ -542,6 +542,12 @@ git-tree-sha1 = "d8d8b8a9f4119829410ecd706da4cc8594a1e020"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "0.10.3"
 
+[[SpineInterface]]
+deps = ["Dates", "PyCall", "Statistics", "Suppressor"]
+git-tree-sha1 = "86de210092ce8cfefa35cf552ecbffa883428f01"
+uuid = "0cda1612-498a-11e9-3c92-77fa82595a4f"
+version = "0.3.1"
+
 [[StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
 git-tree-sha1 = "5c06c0aeb81bef54aed4b3f446847905eb6cbda0"
@@ -557,6 +563,11 @@ deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Missings", "Printf", "Ran
 git-tree-sha1 = "a6102b1f364befdb05746f386b67c6b7e3262c45"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.33.0"
+
+[[Suppressor]]
+git-tree-sha1 = "a819d77f31f83e5792a76081eee1ea6342ab8787"
+uuid = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
+version = "0.2.0"
 
 [[Syslogs]]
 deps = ["Printf", "Sockets"]
