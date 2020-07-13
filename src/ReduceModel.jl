@@ -6,6 +6,8 @@ using SparseArrays
 using LinearAlgebra
 using PyCall
 using Plots
+using SpineInterface
+using URIParser
 
 # Export utility
 export call_rei
