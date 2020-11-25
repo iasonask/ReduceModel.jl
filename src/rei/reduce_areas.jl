@@ -430,8 +430,9 @@ function aggregateAreas!(areaInfo::PMAreas, pm::ACPPowerModel, options::REIOptio
         # Gaussian reduction - we use pinv to take care of cases when the
         # admittance matrix is singular
         # real(sum(inv(YadmAreaI(indNE,indNE)))) :TODO check this comment
+        rtol = sqrt(eps(real(float(one(eltype(Matrix(YadmAreaI[indNE, indNE])))))))
         YadmAreaRed = YadmAreaI[indE, indE] - YadmAreaI[indE, indNE] *
-                      pinv(Matrix(YadmAreaI[indNE, indNE])) * YadmAreaI[indNE, indE]
+                      pinv(Matrix(YadmAreaI[indNE, indNE]); rtol=rtol) * YadmAreaI[indNE, indE]
 
         # Here we store the reduced REI matrix, the full REI admittance matrix
         # and the original admittance matrix
