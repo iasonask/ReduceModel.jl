@@ -76,7 +76,7 @@ function call_rei(
                 break
             else
                 println(
-                    "Calulation of REI failed: $(results_red["termination_status"])," *
+                    "Calulation of REI PowerFlow failed: $(results_red["termination_status"])," *
                     (
                         tr < NO_TRIES ? " trying again." :
                         " exiting, consider choosing different options for the REI calculation."
@@ -92,6 +92,7 @@ function call_rei(
                     " exiting, consider choosing different options for the REI calculation."
                 ),
             )
+            sprint(showerror, e)
         end
     end
 
