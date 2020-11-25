@@ -25,7 +25,7 @@ function __init__()
     push!(pyimport("sys")["path"], joinpath(dirname(@__FILE__), "util/"))
     copy!(net_layout, pyimport("network_layout"))
     # only load ploting functions if Plots is imported
-    @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
+    @require Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
         println("Loading Ploting functionality...")
         using Plots
         include("util/reduced_plots.jl")
@@ -33,9 +33,5 @@ function __init__()
         export plot_grid
     end
 end
-
-# @require Plots begin
-#   using Plots
-# end
 
 end

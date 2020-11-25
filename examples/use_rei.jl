@@ -7,7 +7,7 @@ file = joinpath(dirname(@__FILE__), "cases/case118.m")
 
 # calculate rei and return a PowerModel dict,
 # choosing number of areas and default values
-case = call_rei(file, 2; optimizer=Ipopt.Optimizer)
+case = call_rei(file, 2; optimizer = Ipopt.Optimizer)
 
 ## use custom preferences
 using ReduceModel
@@ -66,13 +66,18 @@ display(pl)
 sol_red = run_ac_opf(reduced_net, Ipopt.Optimizer)
 sol_ori = run_ac_opf(original_net, Ipopt.Optimizer)
 
-red_loss = [loss[2]["pt"]+loss[2]["pf"] for loss in sol_red["solution"]["branch"]]
-total_red_loss = round(sum(red_loss), digits=2)
+red_loss =
+    [loss[2]["pt"] + loss[2]["pf"] for loss in sol_red["solution"]["branch"]]
+total_red_loss = round(sum(red_loss), digits = 2)
 
-ori_loss = [loss[2]["pt"]+loss[2]["pf"] for loss in sol_ori["solution"]["branch"]]
-total_ori_loss = round(sum(ori_loss), digits=2)
+ori_loss =
+    [loss[2]["pt"] + loss[2]["pf"] for loss in sol_ori["solution"]["branch"]]
+total_ori_loss = round(sum(ori_loss), digits = 2)
 
-loss_err = round(((total_ori_loss - total_red_loss) / total_ori_loss) * 100, digits=2)
+loss_err = round(
+    ((total_ori_loss - total_red_loss) / total_ori_loss) * 100,
+    digits = 2,
+)
 
 println("Accuracy of Reduced Power Flow model: ")
 println("Total losses original network: $(total_ori_loss)")
