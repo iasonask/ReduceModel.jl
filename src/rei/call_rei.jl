@@ -12,8 +12,8 @@ Create a Reduced Equivalent Independent power model
 function call_rei(
     file::String,
     no_areas::Int64;
+    optimizer,
     options::REIOptions = REIOptions(),
-    optimizer = optimizer,
     export_file = true,
     path = @__DIR__,
     no_tries = NO_TRIES,
